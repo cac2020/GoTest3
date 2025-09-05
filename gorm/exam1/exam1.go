@@ -74,7 +74,7 @@ func (c *Comment) AfterSave(tx *gorm.DB) (err error) {
 		post.CommentStatus = 1
 	}
 	//仅更新指定字段
-	tx.Model(&Post{}).Where("id = ?", c.PostID).Updates(Post{CommentNum: post.CommentNum, CommentStatus: post.CommentStatus})
+	tx.Model(&Post{}).Where("id = ?", c.PostID).Updates(map[string]interface{}{"comment_num": post.CommentNum, "comment_status": post.CommentStatus})
 	return
 }
 
@@ -90,15 +90,12 @@ func (c *Comment) AfterDelete(tx *gorm.DB) (err error) {
 	if commentCount <= 0 {
 		commentStatus = 0
 	}
-	fmt.Printf("更新前参数：postID：%d，评论数量：%d，评论状态：%d \n", c.PostID, commentCount, commentStatus)
-	//仅更新指定字段
+	//fmt.Printf("更新前参数：postID：%d，评论数量：%d，评论状态：%d \n", c.PostID, commentCount, commentStatus)
+
+	//仅更新指定字段  当使用结构体作为参数时，GORM默认会忽略结构体中的零值字段（如0、""、false等），而map会保留所有指定的字段
 	//tx.Model(&Post{}).Where("id = ?", c.PostID).Updates(Post{CommentNum: int(commentCount), CommentStatus: commentStatus})
 	tx.Model(&Post{}).Where("id = ?", c.PostID).Updates(map[string]interface{}{"comment_num": int(commentCount), "comment_status": commentStatus})
 
-	//更新后强制查询一次查看结果
-	//var post Post
-	//tx.Model(&Post{}).Where("id = ?", c.PostID).Select("comment_num,comment_status").First(&post)
-	//fmt.Printf("删除评论后文章信息ID：%d，评论状态：%d，评论数量：%d \n", c.PostID, post.CommentStatus, post.CommentNum)
 	return
 }
 
